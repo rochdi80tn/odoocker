@@ -9,3 +9,13 @@ docker-compose.override.yml
 
 # Ignores any __pycache__ folder.
 __pycache__
+
+# task
+task.md
+
+# Ignores the downloaded files.
+download/
+oca/
+third-party-addons/
+extra-addons/
+custom-addons/
