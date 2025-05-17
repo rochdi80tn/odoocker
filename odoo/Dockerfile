@@ -53,7 +53,6 @@ RUN apt-get update && apt-get install -y \
     git \
     git-man \
     less \
-    libcbor0.8 \
     libcurl3-gnutls \
     libedit2 \
     liberror-perl \
@@ -62,6 +61,8 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     patch \
     xauth \
+    # banner display
+    figlet \
     # Remove apt lists
     && rm -rf /var/lib/apt/lists/*
 
@@ -71,7 +72,7 @@ RUN apt-get update && apt-get install -y \
 # Copy & Install PIP requirements
 COPY --chown=odoo:odoo ./odoo/requirements.txt /tmp/requirements.txt
 
-RUN python3 -m pip install -r /tmp/requirements.txt && \
+RUN python3 -m pip install -r /tmp/requirements.txt --break-system-packages && \
     rm /tmp/requirements.txt
 
 #--------------------------------------------#
@@ -80,7 +81,6 @@ RUN python3 -m pip install -r /tmp/requirements.txt && \
 # Create third-party-addons directory and clone them
 COPY --chown=odoo:odoo ./odoo/clone-addons.sh /
 COPY --chown=odoo:odoo ./odoo/third-party-addons.txt /
-RUN /clone-addons.sh
 
 #-----------------------#
 #       Odoo Conf       #
