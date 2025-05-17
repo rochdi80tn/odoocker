@@ -23,6 +23,10 @@ services:
       - ./odoo/extra-addons:${EXTRA_ADDONS}
       - ./odoo/custom-addons:${CUSTOM_ADDONS}
       - ./odoo/entrypoint.sh:/entrypoint.sh
+      - ./odoo/clone-addons.sh:/clone-addons.sh
+      - ./odoo/third-party-addons.txt:/third-party-addons.txt
+      - ./odoo/third-party-addons:${THIRD_PARTY_ADDONS}
+      - ./download:/download
     environment:
       - HOST=${DB_HOST}
       - PORT=${DB_PORT}
@@ -55,7 +59,7 @@ services:
     profiles: [$ODOO_PROFILES]
 
   postgres:
-    build: 
+    build:
       context: ./
       dockerfile: ./postgres/Dockerfile
       args:
