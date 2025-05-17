@@ -5,11 +5,11 @@ set -e
 while IFS='=' read -r key value || [[ -n $key ]]; do
     # Skip comments and empty lines
     [[ $key =~ ^#.* ]] || [[ -z $key ]] && continue
-    
+
     # Removing any quotes around the value
     value=${value%\"}
     value=${value#\"}
-    
+
     # Declare variable
     eval "$key=\"$value\""
 done < .env
@@ -31,6 +31,34 @@ if [[ $USE_SENTRY == "true" ]]; then
 fi
 
 case "$1" in
+    shell)
+        # Starts a shell in the container.
+        echo "Starting the ODOO shell..."
+        figlet -f big  "ODOO SHELL"
+        exec odoo shell
+        ;;
+
+    bash | sh)
+        # Display a banner
+        figlet -f small "ODOO CONTAINER"
+
+        # Display Odoo version
+        echo "`odoo --version`\n"
+
+        # Display environment variables
+        echo "Environment Variables:"
+        env | grep -E "ODOO|DB|USE|APP_ENV" | sed 's/^/    /'
+
+        # Display container details
+        echo "Container Details:"
+        echo "    Hostname: $(hostname)"
+        echo "    Current User: $(whoami)"
+        echo "    Working Directory: $(pwd)"
+
+        # Start a shell
+        exec $1
+        ;;
+
     -- | odoo)
         shift
         if [[ "$1" == "scaffold" ]] ; then
