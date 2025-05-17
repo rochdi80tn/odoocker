@@ -22,15 +22,16 @@ clone_and_copy_modules() {
 
     shift 2
     local modules_conditions=("$@")
-
+    local should_clone=false
     # Clone and copy logic for enterprise repository
     if [[ $repo_type == "enterprise" ]]; then
-        if [ -n "$GITHUB_USER" ] && [ -n "$GITHUB_ACCESS_TOKEN" ]; then
+        [[ ${modules_conditions[0]} == true ]] && should_clone=true
+        if [ -n "$ENTERPRISE_USER" ] && [ -n "$ENTERPRISE_ACCESS_TOKEN" ] && [[ $should_clone == true ]]; then
+            echo "Cloning enterprise repository: $clone_cmd"
             $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags
         fi
     else
         # Determine if any module has a true condition
-        local should_clone=false
         if [[ ${#modules_conditions[@]} -eq 1 ]]; then
             [[ ${modules_conditions[0]} == true ]] && should_clone=true
         else
@@ -43,8 +44,24 @@ clone_and_copy_modules() {
         fi
 
         # Clone the repo if should_clone is true and it's not already cloned
-        if [[ $should_clone == true && ! -d "$repo_name" ]]; then
-            $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags
+        if [[ $should_clone == true ]]; then
+            echo ""
+            if [[ ! -d "/download/$repo_name" ]]; then
+                echo "Cloning repository: $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags /download/$repo_name"
+                $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags /download/$repo_name
+            else
+                # If the repo is already cloned, pull the latest changes
+                # Check if the current directory is a git repository
+                if [ -d "/download/$repo_name/.git" ]; then
+                    # Check if the current directory is a git repository
+                    echo "Updating existing repository: /download/$repo_name"
+                    cd /download/$repo_name && git fetch --all && git reset --hard origin/${ODOO_TAG}
+                else
+                    echo "Not a git repository, pulling changes..."
+                    # If not, just pull the latest changes
+                    cd /download/$repo_name && git pull
+                fi
+            fi
         fi
 
         # Copy the modules if the condition is true
@@ -53,8 +70,8 @@ clone_and_copy_modules() {
                 local module=${modules_conditions[i]}
                 local condition=${modules_conditions[i+1]}
                 if [[ $condition == true ]]; then
-                    echo "Copying ${module} from ${repo_name} into ${THIRD_PARTY_ADDONS}"
-                    cp -r /${repo_name}/${module} ${THIRD_PARTY_ADDONS}/${module}
+                    echo "  > Copying ${module} from /download/${repo_name} into ${THIRD_PARTY_ADDONS}"
+                    rm -rf ${THIRD_PARTY_ADDONS}/${module} && cp -r /download/${repo_name}/${module} ${THIRD_PARTY_ADDONS}/${module}
                 fi
             done
         fi
@@ -83,9 +100,9 @@ expand_env_vars() {
 }
 
 # Read the configuration file and process each line
+mkdir -p ${ENTERPRISE_ADDONS}
+mkdir -p ${THIRD_PARTY_ADDONS}
 while IFS= read -r line; do
-    mkdir -p ${ENTERPRISE_ADDONS}
-    mkdir -p ${THIRD_PARTY_ADDONS}
     [[ -z "$line" || "$line" == \#* ]] && continue
     clone_and_copy_modules $(expand_env_vars "$line")
 done < "third-party-addons.txt"

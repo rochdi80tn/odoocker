@@ -1,7 +1,7 @@
 # This file is read by clone-addons.sh
 
 # Enterprise addons
-enterprise https://github.com/odoo/enterprise true
+enterprise https://github.com/odoo/enterprise false
 
 # Odoocker repositories
 public https://github.com/odoocker/odoocker-modules.git odoocker_base true
@@ -14,5 +14,10 @@ public https://github.com/odoocker/server-tools.git sentry ${USE_SENTRY}
 # <public|private> <repo_url> <module1> <true|false> <module2> <true|false> ...
 
 # Public repositories
+public https://github.com/OCA/web.git web_responsive true
+public https://github.com/OCA/reporting-engine.git report_xlsx true
+public https://github.com/OCA/server-ux.git date_range true
+public https://github.com/OCA/account-financial-reporting.git account_financial_report true account_tax_balance true
+public https://github.com/OCA/partner-contact.git partner_manual_rank false
 
 # Private repositories
