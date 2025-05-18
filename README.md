@@ -345,6 +345,26 @@ Note: the deployment process is easier & faster with aliases.
 
 - `task start`
 
+# Deployment Process
+
+- `ln -s .env.example .env`
+- `ln -s docker-compose.override.production.yml docker-compose.override.yml`
+- `task build`
+- `docker compose pull`
+- `ENV=fresh task start`
+- `ENV=fresh task logs`
+
+Once load completed Ctrl-C logs and
+
+- `task clone-addons`
+- `task odoo-rc`
+- `task stop`
+
+Update INTI with modules from ./download/processed_modules.txt
+
+- `ENV=staging ./task start`
+- `ENV=staging ./task logs`
+
 # Footnote
 
 This project is based on the [Official Odoo Docker](https://hub.docker.com/_/odoo/) image. We've strived to ensure a seamless integration with the original Docker setup while making necessary customizations to suit our requirements. We encourage contributors and users to frequently refer to the official documentation for foundational concepts and updates. Thank you for your continued support and trust in our project.

@@ -5,12 +5,12 @@
 # <public|private> <repo_url> <module1> <true|false> <module2> <true|false> ...
 
 # Enterprise addons
-##enterprise https://github.com/odoo/enterprise false
+enterprise https://github.com/odoo/enterprise false
 
 # Odoocker repositories
 public https://github.com/odoocker/odoocker-modules.git odoocker_base true
 public https://github.com/odoocker/odoo-cloud-platform.git session_redis ${USE_REDIS} base_attachment_object_storage ${USE_S3} attachment_s3 ${USE_S3}
-public https://github.com/odoocker/server-tools.git sentry ${USE_SENTRY} base_name_search_improved true
+public https://github.com/odoocker/server-tools.git sentry ${USE_SENTRY}
 
 # Public repositories
 # https://odoo-community.org/list-of-must-have-oca-modules
@@ -27,6 +27,7 @@ public https://github.com/OCA/queue.git queue_job true
 
 
 # no 18.0
+#public https://github.com/odoocker/server-tools.git base_name_search_improved true
 #https://github.com/OCA/partner-contact/tree/16.0/partner_manual_rank
 #https://github.com/OCA/web/tree/16.0/web_listview_range_select
 #https://github.com/OCA/server-auth/tree/16.0/password_security
