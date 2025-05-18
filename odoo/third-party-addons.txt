@@ -1,23 +1,35 @@
 # This file is read by clone-addons.sh
-
-# Enterprise addons
-enterprise https://github.com/odoo/enterprise false
-
-# Odoocker repositories
-public https://github.com/odoocker/odoocker-modules.git odoocker_base true
-public https://github.com/odoocker/odoo-cloud-platform.git session_redis ${USE_REDIS} base_attachment_object_storage ${USE_S3} attachment_s3 ${USE_S3}
-public https://github.com/odoocker/server-tools.git sentry ${USE_SENTRY}
-
 # Add repositories with the following format:
 # <public|private> <repo_url> <true|false>
 # or
 # <public|private> <repo_url> <module1> <true|false> <module2> <true|false> ...
 
+# Enterprise addons
+##enterprise https://github.com/odoo/enterprise false
+
+# Odoocker repositories
+public https://github.com/odoocker/odoocker-modules.git odoocker_base true
+public https://github.com/odoocker/odoo-cloud-platform.git session_redis ${USE_REDIS} base_attachment_object_storage ${USE_S3} attachment_s3 ${USE_S3}
+public https://github.com/odoocker/server-tools.git sentry ${USE_SENTRY} base_name_search_improved true
+
 # Public repositories
-public https://github.com/OCA/web.git web_responsive true
+# https://odoo-community.org/list-of-must-have-oca-modules
+public https://github.com/OCA/web.git web_responsive true web_search_with_and true  web_refresher true
 public https://github.com/OCA/reporting-engine.git report_xlsx true
-public https://github.com/OCA/server-ux.git date_range true
+public https://github.com/OCA/server-ux.git date_range true server_action_mass_edit true
 public https://github.com/OCA/account-financial-reporting.git account_financial_report true account_tax_balance true
-public https://github.com/OCA/partner-contact.git partner_manual_rank false
+public https://github.com/OCA/partner-contact.git partner_firstname true partner_contact_access_link true
+public https://github.com/OCA/server-brand.git disable_odoo_online true
+public https://github.com/OCA/mail.git mail_debrand true
+public https://github.com/OCA/queue.git queue_job true
 
 # Private repositories
+
+
+# no 18.0
+#https://github.com/OCA/partner-contact/tree/16.0/partner_manual_rank
+#https://github.com/OCA/web/tree/16.0/web_listview_range_select
+#https://github.com/OCA/server-auth/tree/16.0/password_security
+#https://github.com/OCA/web/tree/16.0/web_dialog_size
+#https://github.com/OCA/web/tree/16.0/web_listview_range_select
+#https://github.com/OCA/web/tree/18.0/web_advanced_search

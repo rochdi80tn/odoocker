@@ -13,20 +13,28 @@ services:
         - GITHUB_USER
         - GITHUB_ACCESS_TOKEN
         - THIRD_PARTY_ADDONS
+        - CUSTOM_ADDONS
+        - ENTERPRISE_ADDONS
+        - EXTRA_ADDONS
         - LOG_PATH
         - USE_REDIS
         - USE_S3
         - USE_SENTRY
+    image: ${PROJECT_NAME}/odoo:${ODOO_TAG}
     tty: true
     volumes:
       - odoo-data:${DATA_DIR}
       - ./odoo/extra-addons:${EXTRA_ADDONS}
       - ./odoo/custom-addons:${CUSTOM_ADDONS}
+      - ./odoo/third-party-addons:${THIRD_PARTY_ADDONS}
+      - ./enterprise:${ENTERPRISE_ADDONS}
       - ./odoo/entrypoint.sh:/entrypoint.sh
       - ./odoo/clone-addons.sh:/clone-addons.sh
       - ./odoo/third-party-addons.txt:/third-party-addons.txt
-      - ./odoo/third-party-addons:${THIRD_PARTY_ADDONS}
       - ./download:/download
+      - ./.env:/.env
+      - ./odoo/odoo.conf:/odoo.conf
+      - ./odoo/odoorc.sh:/odoorc.sh
     environment:
       - HOST=${DB_HOST}
       - PORT=${DB_PORT}
@@ -56,6 +64,8 @@ services:
       - AWS_BUCKETNAME
     networks:
       - internal
+    depends_on:
+      - postgres
     profiles: [$ODOO_PROFILES]
 
   postgres:
@@ -64,10 +74,14 @@ services:
       dockerfile: ./postgres/Dockerfile
       args:
         - POSTGRES_TAG
+    image: ${PROJECT_NAME}/postgres:${POSTGRES_TAG}
     tty: true
     volumes:
       - pg-data:${PGDATA}
       - ./postgres/entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
+      - ./.env:/.env
+      - ./postgres/backup.sh:/backup.sh
+      - ./postgres/restore.sh:/restore.sh
     environment:
       - POSTGRES_DB
       - POSTGRES_USER
@@ -174,6 +188,7 @@ services:
       dockerfile: ./pgadmin/Dockerfile
       args:
         - PGADMIN_TAG
+    image: ${PROJECT_NAME}/pgadmin:${PGADMIN_TAG}
     depends_on:
       - nginx-proxy
     expose:
