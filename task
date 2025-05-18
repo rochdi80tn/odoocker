@@ -7,6 +7,11 @@ if [[ -a ".env" ]]; then
     source .env
 fi
 
+# Allow terminal overrides for APP_ENV
+APP_ENV=${ENV:-$APP_ENV}
+echo "APP_ENV is set to: $APP_ENV"
+
+
 function help-table() {
     # Define column widths
     CMD_WIDTH=25
@@ -22,7 +27,7 @@ function help-table() {
 
     # printf "$COLUMN" "activate-venv" "" "Activate virtualenv."
     # printf "$COLUMN" "add-git-submodule" "[url] [path]" "Add git submodule."
-    # printf "$COLUMN" "build" "[Dockerfile][platform]" "Build Odoo Container image. Optionally define the target platform."
+    printf "$COLUMN" "build" "[Dockerfile][service]" "Build Odoo Container image. Optionally define single service."
     # printf "$COLUMN" "build-vuepress" "" "Create Vuepress build."
     # printf "$COLUMN" "change-uuid" "[env]" "Change database uuid via xmlrpc."
     # printf "$COLUMN" "checkout" "[version]" "Checkout Odoo version."
@@ -39,7 +44,6 @@ function help-table() {
     # printf "$COLUMN" "clone-git-folder" "" "Clone git folder listed in the .gitmodules file."
     # printf "$COLUMN" "commit-git-folder" "[message][path]" "Commit all changes in path."
     # printf "$COLUMN" "container-login" "[user][pass]" "Setup container hub login credentials."
-    # printf "$COLUMN" "container-ps" "" "List container processes."
     # printf "$COLUMN" "create-git-feature-branch" "[path]" "Create feature branch for Odoo module."
     # printf "$COLUMN" "create-git-mig-branch" "[path]" "Create migration branch for Odoo module."
     # printf "$COLUMN" "create-module" "[path]" "Create new Odoo module from template."
@@ -94,6 +98,7 @@ function help-table() {
     # printf "$COLUMN" "odooctl" "[param]" "Execute odooctl cli."
     printf "$COLUMN" "odoo-shell" "[db]" "Start Odoo shell from source folder."
     # printf "$COLUMN" "patch-database" "[db][path]" "Apply sql file to database."
+    printf "$COLUMN" "ps" "" "List container processes."
     printf "$COLUMN" "psql-shell" "[db]" "Start PSQL shell in container container."
     # printf "$COLUMN" "publish" "[Dockerfile]" "Publish Odoo container image."
     # printf "$COLUMN" "pull-git-folder" "" "Pull all git folders listed in the .gitmodules file."
@@ -122,13 +127,13 @@ function help-table() {
     # printf "$COLUMN" "show-revision" "[revision]" "Show references of Odoo revision."
     # printf "$COLUMN" "source" "" "Source the Python virtual env."
     # printf "$COLUMN" "stage-git-folder" "[path]" "Stage all files in git folders in path."
-    printf "$COLUMN" "start" "[name]" "Start application."
+    printf "$COLUMN" "start" "[name][--browser]" "Start application. If --browser, open the browser."
     printf "$COLUMN" "stop" "[name]" "Stop containers."
     # printf "$COLUMN" "store-dotenv" "" "Store content of .env in pass entry."
     # printf "$COLUMN" "switch-git-folder" "[version]" "Switch branch for all git folders listed in the .gitmodules file."
     # printf "$COLUMN" "sync-git-folder" "" "Switch, stash and pull all git folders."
     # printf "$COLUMN" "template-compose" "" "Template the Docker compose file."
-    # printf "$COLUMN" "template-odoo-rc" "" "Template the Odoo config file."
+    printf "$COLUMN" "odoo-rc" "" "Generate the Odoo config file."
     # printf "$COLUMN" "template-repo" "[path]" "Update the repo folder from template."
     # printf "$COLUMN" "test-image" "[Dockerfile]" "Test Odoo container image."
     # printf "$COLUMN" "test-module" "[db][name,path]" "Test target Odoo module."
@@ -137,6 +142,7 @@ function help-table() {
     # printf "$COLUMN" "test-xmlrpc" "[env]" "Test json rpc connection."
     # printf "$COLUMN" "translate-module" "[db][path][lang]" "Generate translation for Odoo module."
     # printf "$COLUMN" "update-docs" "" "Update project docs."
+    printf "$COLUMN" "up" "[container]" "Brning up container"
     printf "$COLUMN" "update-help-docs" "" "Write help table to task.md file."
     # printf "$COLUMN" "update-module" "[db][name,path]" "Update target Odoo module."
     # printf "$COLUMN" "update-module-license" "[grep]" "Update LICENSE file for each matching module."
@@ -300,15 +306,34 @@ function start() {
         exit 1
     fi
 
+
+    if [[ "$1" =~ "pgadmin" ]]; then
+        open-url-with-delay "http://$PGADMIN_DOMAIN"
+    fi
+
+    if [[ "$1" =~ "odoo" ]]; then
+        local url="http://$DOMAIN"
+        if [[ "$2" == "-b" || "$2" == "--browser" ]]; then
+            echo_color $COLOR_GRAY "Openning $url..."
+            $OS_OPEN "$url" &> /dev/null &
+            return
+        else
+            open-url-with-delay $url $2
+        fi
+    fi
+
     # Start the specified service
     echo_color $COLOR_BLUE "Starting '$1' container..."
     $COMPOSE_COMMAND up -d "$1"
+}
 
-    if [[ "$1" =~ "pgadmin" ]]; then
-        open-url-with-delay "http://localhost:8000"
-    fi
-    if [[ "$1" =~ "odoo" ]]; then
-        open-url-with-delay "http://localhost:8069"
+function up() {
+    if [ -z "$1" ] ; then
+        echo_color $COLOR_BLUE "Build all images..."
+        $COMPOSE_COMMAND up
+    else
+        echo_color $COLOR_BLUE "Build '$1' image..."
+        $COMPOSE_COMMAND up "$1"
     fi
 }
 
@@ -319,6 +344,21 @@ function stop() {
     else
         echo_color $COLOR_BLUE "Stop '$1' container..."
         $COMPOSE_COMMAND stop "$1"
+    fi
+}
+
+
+function ps() {
+    $CONTAINER_ENGINE ps
+}
+
+function build() {
+    if [ -z "$1" ] ; then
+        echo_color $COLOR_BLUE "Build all images..."
+        $COMPOSE_COMMAND build
+    else
+        echo_color $COLOR_BLUE "Build '$1' image..."
+        $COMPOSE_COMMAND build "$1"
     fi
 }
 
@@ -382,6 +422,17 @@ function clone-addons() {
     $COMPOSE_COMMAND exec -u root odoo /clone-addons.sh
 }
 
+function odoo-rc() {
+    _ensure_is_running odoo
+
+    # Execute the clone-addons script inside the odoo container
+    echo_color $COLOR_BLUE "Running odoorc.sh inside the Odoo container..."
+
+    # Uncomment the following line if you need to run the script as root
+    $COMPOSE_COMMAND exec -u root odoo /odoorc.sh
+}
+
+
 function list-valid-commands() {
     update-help-docs --silent
 
@@ -392,9 +443,11 @@ function list-valid-commands() {
 
 }
 
+
 # Creating missing folders and files
 [ -f ./task.md ] || update-help-docs
 [ -d ./download ] || mkdir download
+[ -d ./enterprise ] || mkdir enterprise
 
 if declare -f "$1" > /dev/null; then
     "$1" "${@:2}"

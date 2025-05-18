@@ -328,50 +328,22 @@ If your instance has pgAdmin, make sure you adapt your aliases to this configura
 Note: the deployment process is easier & faster with aliases.
 
 1. Backup the production Databases from `/web/database/manager`.
-2. Run
+2. Bring up containers and install addons using [`Fresh`](#6-staging) environment
 
-```
-sudo apt update && sudo apt upgrade -y
-```
+- `ENV=fresh task start`
+- `task clone-addons`
+- `task odoo-rc`
+- `task stop`
 
-- If packages are kept, install them
+3. Use [`Staging`](#6-staging) environment to provision system
 
-```
-sudo apt install <kept packages>
-```
+- `ENV=staging task up odoo`
+- Wait untill all modules are loaded (Registry loaded)
+- Ctrl-C to stop running odoo
 
-3. Restart the server
+4. Set [`Production`](#7-production) environment or [`Local`](#7-production) environment
 
-```
-sudo reboot
-```
-
-- Make sure there are no more upgrades or possible kept packages
-
-```
-sudo apt update && sudo apt upgrade -y
-```
-
-4. Go to the project folder in /home/ubuntu or (~)
-
-```
-cd ~/odoocker
-```
-
-or with alias:
-
-```
-odoo
-```
-
-5. Pull the latest `main` branch changes.
-
-```
-git pull origin main
-```
-
-6. Set [`Staging`](#6-staging) environment
-7. Set [`Production`](#7-production) environment
+- `task start`
 
 # Footnote
 
