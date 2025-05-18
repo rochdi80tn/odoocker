@@ -307,6 +307,12 @@ function start() {
         exit 1
     fi
 
+    echo_color $COLOR_BLUE "Starting '$1' container..."
+    if [[ "$1" =~ "proxy" ]]; then
+        $COMPOSE_COMMAND up -d "nginx-proxy"
+        return
+    fi
+
 
     if [[ "$1" =~ "pgadmin" ]]; then
         open-url-with-delay "http://$PGADMIN_DOMAIN"
@@ -324,7 +330,6 @@ function start() {
     fi
 
     # Start the specified service
-    echo_color $COLOR_BLUE "Starting '$1' container..."
     $COMPOSE_COMMAND up -d "$1"
 }
 
@@ -344,6 +349,10 @@ function stop() {
         $COMPOSE_COMMAND stop
     else
         echo_color $COLOR_BLUE "Stop '$1' container..."
+        if [[ "$1" =~ "proxy" ]]; then
+            $COMPOSE_COMMAND stop "nginx-proxy"
+            return
+        fi
         $COMPOSE_COMMAND stop "$1"
     fi
 }
