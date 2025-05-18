@@ -2,6 +2,9 @@
 
 set -e
 
+# Array to store all repository names
+processed_modules=()
+
 # Function to construct the clone command
 construct_clone_command() {
     local repo_type=$1
@@ -50,16 +53,28 @@ clone_and_copy_modules() {
                 echo "Cloning repository: $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags /download/$repo_name"
                 $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags /download/$repo_name
             else
-                # If the repo is already cloned, pull the latest changes
-                # Check if the current directory is a git repository
-                if [ -d "/download/$repo_name/.git" ]; then
-                    # Check if the current directory is a git repository
-                    echo "Updating existing repository: /download/$repo_name"
-                    cd /download/$repo_name && git fetch --all && git reset --hard origin/${ODOO_TAG}
+                # # If the repo is already cloned, pull the latest changes
+                if git -C "/download/$repo_name" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+                    echo -n "Checking if repository /download/$repo_name..."
+
+                    # Fetch the latest changes from the remote
+                    cd /download/$repo_name
+                    git fetch --quiet origin ${ODOO_TAG}
+
+                    # Compare the local HEAD with the remote branch
+                    LOCAL_COMMIT=$(git rev-parse HEAD)
+                    REMOTE_COMMIT=$(git rev-parse origin/${ODOO_TAG})
+
+                    if [[ "$LOCAL_COMMIT" == "$REMOTE_COMMIT" ]]; then
+                        echo " already up-to-date"
+                    else
+                        echo " requires updating... "
+                        git reset --hard origin/${ODOO_TAG}
+                    fi
                 else
-                    echo "Not a git repository, pulling changes..."
-                    # If not, just pull the latest changes
-                    cd /download/$repo_name && git pull
+                    echo "/download/$repo_name is not a valid git repository. Re-cloning..."
+                    rm -rf "/download/$repo_name"
+                    $clone_cmd --depth 1 --branch ${ODOO_TAG} --single-branch --no-tags /download/$repo_name
                 fi
             fi
         fi
@@ -72,6 +87,8 @@ clone_and_copy_modules() {
                 if [[ $condition == true ]]; then
                     echo "  > Copying ${module} from /download/${repo_name} into ${THIRD_PARTY_ADDONS}"
                     rm -rf ${THIRD_PARTY_ADDONS}/${module} && cp -r /download/${repo_name}/${module} ${THIRD_PARTY_ADDONS}/${module}
+                    # Add the repo_name to the array
+                    processed_modules+=("$module")
                 fi
             done
         fi
@@ -100,9 +117,18 @@ expand_env_vars() {
 }
 
 # Read the configuration file and process each line
-mkdir -p ${ENTERPRISE_ADDONS}
-mkdir -p ${THIRD_PARTY_ADDONS}
+# mkdir -p ${ENTERPRISE_ADDONS}
+# mkdir -p ${THIRD_PARTY_ADDONS}
 while IFS= read -r line; do
     [[ -z "$line" || "$line" == \#* ]] && continue
     clone_and_copy_modules $(expand_env_vars "$line")
 done < "third-party-addons.txt"
+
+
+# Display all collected repository names at the end
+echo "${processed_modules[@]}" > /download/processed_modules.txt
+echo
+echo "Repositories processed list saved in /download/processed_modules.txt"
+# for module in "${processed_modules[@]}"; do
+#     echo "  - $module"
+# done
