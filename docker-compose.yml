@@ -14,7 +14,6 @@ services:
         - GITHUB_ACCESS_TOKEN
         - THIRD_PARTY_ADDONS
         - CUSTOM_ADDONS
-        - ENTERPRISE_ADDONS
         - EXTRA_ADDONS
         - LOG_PATH
         - USE_REDIS
