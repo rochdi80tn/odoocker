@@ -77,8 +77,10 @@ services:
     tty: true
     volumes:
       - pg-data:${PGDATA}
-      - ./postgres/entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
+      - odoo-data:/mnt/odoo-data:ro
+      - ${BACKUP_DIR}:/mnt/backup
       - ./.env:/.env
+      - ./postgres/entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
       - ./postgres/backup.sh:/backup.sh
       - ./postgres/restore.sh:/restore.sh
     environment:

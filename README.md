@@ -345,6 +345,18 @@ Note: the deployment process is easier & faster with aliases.
 
 - `task start`
 
+5.
+install bse
+configure language country and comany details logos etc
+install odoocker_base,web_responsive,disable_odoo_online,mail_debrand
+isntall sale_management,purchase
+enable sales/uom, configure them
+set precision decimal to 5
+isntall purchase
+isntall stock
+define whare houses
+install point_of_sale
+
 # Deployment Process
 
 - `ln -s .env.example .env`

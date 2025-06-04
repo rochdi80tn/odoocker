@@ -179,7 +179,10 @@ PASS_ENTRY="${PASS_ENTRY,,}"
 ODOO_RC="odoo.conf"
 ODOO_BUILD_CONFIG_DIR="$HOME/.config/odoo-build"
 
+
 # Dynamic env vars
+BACKUP_DIR=${BACKUP_DIR:="./backup"}
+DOWNLOAD_DIR=${DOWNLOAD_DIR:="./download"}
 
 ODOO_VERSION=$(echo "$ODOO_REVISION" | cut -d'.' -f1-2)
 ODOO_DATABASE=${ODOO_DATABASE:="$ODOO_VERSION"}
@@ -274,7 +277,7 @@ function logs() {
     CONTAINER=${CONTAINER:="odoo"}
 
     echo_color $COLOR_BLUE "Tail logs on '$CONTAINER' container..."
-    $COMPOSE_COMMAND logs --follow "$CONTAINER"
+    $COMPOSE_COMMAND logs -f -n100 "$CONTAINER"
 }
 
 function open-url-with-delay() {
@@ -422,6 +425,25 @@ function psql-shell() {
     $COMPOSE_COMMAND exec -it postgres psql "postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DATABASE"
 }
 
+
+function backup() {
+    DATABASE="$1"
+    if [ -z "$DATABASE" ]; then
+        DATABASE="$DB_NAME"
+    fi
+    _ensure_is_running postgres
+    $COMPOSE_COMMAND exec -it postgres /backup.sh $DATABASE
+}
+
+function backup-full() {
+    DATABASE="$1"
+    if [ -z "$DATABASE" ]; then
+        DATABASE="$DB_NAME"
+    fi
+    _ensure_is_running postgres
+    $COMPOSE_COMMAND exec -it postgres /backup.sh -f $DATABASE
+}
+
 function clone-addons() {
     _ensure_is_running odoo
 
@@ -453,16 +475,23 @@ function list-valid-commands() {
 
 }
 
-function dump-db() {
-    # Check if required arguments are provided
-    if [ -z "$1" ]; then
-        echo_color $COLOR_RED "Error: Database name is required."
-        echo "Usage: task backup-db <database_name> [backup_file]"
-        return 1
+function dump-db000() {
+    DATABASE_NAME="$1"
+    if [ -z "$DATABASE_NAME" ]; then
+        DATABASE_NAME="$DB_NAME"
     fi
 
-    DATABASE_NAME="$1"
-    BACKUP_FILE="${2:-${DATABASE_NAME}_backup.sql}"  # Default backup file name if not provided
+    # Check if required arguments are provided
+    # if [ -z "$1" ]; then
+    #     echo_color $COLOR_RED "Error: Database name is required."
+    #     echo "Usage: task backup-db <database_name> [backup_file]"
+    #     return 1
+    # fi
+
+    _ensure_is_running postgres
+    NOW=$(date +"%Y%m%d_%H%M%S")
+    BACKUP_FILE="${2:-${DATABASE_NAME}_backup_${NOW}.sql}"
+    BACKUP_FILE="${BACKUP_DIR}/$(basename "$BACKUP_FILE")"
     DB_HOST="${DB_HOST:-localhost}"                 # Use DB_HOST from .env or default to localhost
     DB_PORT="${DB_PORT:-5432}"                      # Use DB_PORT from .env or default to 5432
     DB_USER="${DB_USER:-odoo}"                      # Use DB_USER from .env or default to odoo
@@ -474,7 +503,8 @@ function dump-db() {
     export PGPASSWORD="$DB_PASSWORD"
 
     # Run pg_dump to back up the database
-    pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -F c -b -v -f "$BACKUP_FILE" "$DATABASE_NAME"
+
+    echo $COMPOSE_COMMAND exec -it postgres pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -F c -b -v -f "$BACKUP_FILE" "$DATABASE_NAME"
 
     # Check if the backup was successful
     if [ $? -eq 0 ]; then
@@ -488,7 +518,7 @@ function dump-db() {
 }
 
 
-function backup-db() {
+function backup-db0000000() {
     # Check if required arguments are provided
     if [ -z "$1" ]; then
         echo_color $COLOR_RED "Error: Database name is required."
@@ -525,8 +555,9 @@ function backup-db() {
 
 # Creating missing folders and files
 [ -f ./task.md ] || update-help-docs
-[ -d ./download ] || mkdir download
 [ -d ./enterprise ] || mkdir enterprise
+[ -d "$DOWNLOAD_DIR" ] || mkdir -p "$DOWNLOAD_DIR"
+[ -d "$BACKUP_DIR" ] || mkdir -p "$BACKUP_DIR"
 
 if declare -f "$1" > /dev/null; then
     "$1" "${@:2}"

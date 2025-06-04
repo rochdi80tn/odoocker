@@ -67,9 +67,9 @@ case "$1" in
         else
             wait-for-psql.py --db_host ${HOST} --db_port ${PORT} --db_user ${USER} --db_password ${PASSWORD} --timeout=30
 
+            figlet -f big  ${APP_ENV}
 
             if [ ${APP_ENV} = 'fresh' ] || [ ${APP_ENV} = 'restore' ]; then
-                figlet -f big  "ODOO FRESH"
                 # Ideal for a fresh install or restore a production database.
                 # echo odoo --config ${ODOO_RC} --database= --init= --update= --load=${LOAD} --log-level=${LOG_LEVEL} --load-language= --workers=0 --limit-time-cpu=3600 --limit-time-real=7200
                 echo odoo --config ${ODOO_RC} --database= --init= --update= --load-language= --workers=0 --limit-time-cpu=3600 --limit-time-real=7200
@@ -78,7 +78,6 @@ case "$1" in
 
             if [ ${APP_ENV} = 'staging' ] ; then
                 echo "Starting the ODOO staging environment..."
-                figlet -f big  "ODOO STAGING"
 
                 # exec /clone-addons.sh
 
@@ -89,7 +88,6 @@ case "$1" in
             fi
 
             if [ ${APP_ENV} = 'dev' ] ||  [ ${APP_ENV} = 'local' ] ; then
-                figlet -f big  "ODOO LOCAL"
                 # Listens to all .env variables mapped into odoo.conf file.
                 # echo odoo --config ${ODOO_RC} --database=${DB_NAME} --init=${INIT} --update=${UPDATE} --load=${LOAD} --workers=${WORKERS} --log-level=${LOG_LEVEL} --dev=${DEV_MODE}
                 echo odoo --config ${ODOO_RC} --init=${INIT} --update=${UPDATE} --dev=${DEV_MODE} --load-language=
@@ -99,8 +97,10 @@ case "$1" in
             if [ ${APP_ENV} = 'production' ] ; then
                 # Bring up Odoo ready for production.
                 # echo odoo --config ${ODOO_RC} --database= --init=${INIT} --update=${UPDATE} --load=${LOAD} --workers=${WORKERS} --log-level=${LOG_LEVEL} --without-demo=${WITHOUT_DEMO} --load-language= --dev=
-                echo odoo --config ${ODOO_RC} --database= --init=${INIT} --update=${UPDATE} --load-language= --dev=
-                exec odoo --config ${ODOO_RC} --database= --init=${INIT} --update=${UPDATE} --load-language= --dev=
+                # echo odoo --config ${ODOO_RC} --database= --init=${INIT} --update=${UPDATE} --load-language= --dev=
+                # exec odoo --config ${ODOO_RC} --database= --init=${INIT} --update=${UPDATE} --load-language= --dev=
+                echo odoo --config ${ODOO_RC} --database=${DB_NAME} --init=${INIT} --update=${UPDATE} --load=${LOAD} --workers=${WORKERS} --log-level=${LOG_LEVEL} --load-language= --dev=
+                exec odoo --config ${ODOO_RC} --database=${DB_NAME} --init=${INIT} --update=${UPDATE} --load=${LOAD} --workers=${WORKERS} --log-level=${LOG_LEVEL} --load-language= --dev=
             fi
 
 

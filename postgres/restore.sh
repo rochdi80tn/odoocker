@@ -11,7 +11,7 @@ cleanup() {
 
 # Constants
 readonly BACKUP_DIR="/mnt/backup"
-readonly BASE_FILESTORE_PATH="/var/lib/odoo/filestore"
+readonly BASE_FILESTORE_PATH="/mnt/filestore"
 
 # Validates input parameters
 if [[ "$#" -ne 1 ]]; then
