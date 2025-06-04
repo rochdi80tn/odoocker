@@ -15,6 +15,7 @@ task.md
 
 # Ignores the downloaded files.
 download/
+backup/
 oca/
 third-party-addons/
 extra-addons/
