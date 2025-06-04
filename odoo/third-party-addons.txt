@@ -22,6 +22,7 @@ public https://github.com/OCA/partner-contact.git partner_firstname true partner
 public https://github.com/OCA/server-brand.git disable_odoo_online true
 public https://github.com/OCA/mail.git mail_debrand true
 public https://github.com/OCA/queue.git queue_job true
+public https://github.com/OCA/stock-logistics-reporting.git stock_picking_report_valued true
 
 # Private repositories
 
