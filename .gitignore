@@ -16,8 +16,10 @@ task.md
 # Ignores the downloaded files.
 download/
 backup/
-oca/
-third-party-addons/
-extra-addons/
-custom-addons/
 enterprise/
+oca/
+odoo/third-party-addons/
+odoo/extra-addons/
+odoo/custom-addons/
+odoo/addons
+odoo/odoo-src

@@ -27,7 +27,7 @@ function help-table() {
 
     # printf "$COLUMN" "activate-venv" "" "Activate virtualenv."
     # printf "$COLUMN" "add-git-submodule" "[url] [path]" "Add git submodule."
-    printf "$COLUMN" "backup-db" "<database_name> [backup_file]" "Back up an Odoo database to a zip file."
+    printf "$COLUMN" "backup" "<database_name> [backup_file]" "Back up an Odoo database to a zip file."
     printf "$COLUMN" "build" "[Dockerfile][service]" "Build Odoo Container image. Optionally define single service."
     # printf "$COLUMN" "build-vuepress" "" "Create Vuepress build."
     # printf "$COLUMN" "change-uuid" "[env]" "Change database uuid via xmlrpc."
@@ -115,7 +115,8 @@ function help-table() {
     # printf "$COLUMN" "record-with-py-spy" "[pid]" "Record and create flamechart for a process."
     # printf "$COLUMN" "reset-git-folder" "" "Abort rebase and reset submodules listed in the .gitmodules file."
     # printf "$COLUMN" "reset-views" "[db][key]" "Execute hard reset on views matching keys."
-    # printf "$COLUMN" "restart" "[name]" "Restart container."
+    printf "$COLUMN" "restart" "[name]" "Restart container."
+    printf "$COLUMN" "restore" "<db|filestore>" "Restore DB and/or FILESTORE from last backup"
     # printf "$COLUMN" "restore-dotenv" "" "Restore content of .env from pass entry."
     printf "$COLUMN" "run" "[name][cmd]" "Run container with command."
     # printf "$COLUMN" "save-version" "" "Save git folder refs to version folder."
@@ -360,6 +361,16 @@ function stop() {
     fi
 }
 
+function cp-odoo-addons() {
+    rm -rf ./odoo/addons
+    $COMPOSE_COMMAND cp odoo:${COMMUNITY_ADDONS} ./odoo
+}
+
+
+function restart() {
+    stop $1
+    start $1
+}
 
 function ps() {
     $CONTAINER_ENGINE ps
@@ -443,6 +454,63 @@ function backup-full() {
     _ensure_is_running postgres
     $COMPOSE_COMMAND exec -it postgres /backup.sh -f $DATABASE
 }
+
+
+function restore() {
+
+    # Parse arguments
+    RESTORE_FILESTORE=false
+    RESTORE_DB=false
+    while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -d|--db|db)
+        RESTORE_DB=true
+        shift
+        ;;
+        -f|--filestore|filestore)
+        RESTORE_FILESTORE=true
+        shift
+        ;;
+        -*)
+        echo "Invalid option: $1" >&2
+        echo "Usage: $0 [-f|--filestore] [-v|--verbose] <database_name>" >&2
+        exit 1
+        ;;
+        *)
+        break
+        ;;
+    esac
+    done
+
+    # Exit if both RESTORE_DB and INCLUDE_FILESTORE are false
+    if [[ "${RESTORE_DB}" = false && "${RESTORE_FILESTORE}" = false ]]; then
+        echo "Nothing to restore: both database and filestore restore are disabled. Use -d and/or -f." >&2
+        echo "Usage: $0 restore {[-f|--filestore] [-d|--db]} [<database_name>]" >&2
+        echo " -f, --filestore : restore filestore in the backup" >&2
+        echo " -d, --db   : restore database" >&2
+        echo " database_name : defaults to $DB_NAME" >&2
+        exit 1
+    fi
+
+    DATABASE="$1"
+    if [ -z "$DATABASE" ]; then
+        DATABASE="$DB_NAME"
+    fi
+
+
+    if [[ "${RESTORE_DB}" = true ]]; then
+        _ensure_is_running postgres
+        $COMPOSE_COMMAND exec -it postgres /restore.sh --db $DATABASE
+    fi
+
+    if [[ "${RESTORE_FILESTORE}" = true ]]; then
+        _ensure_is_running odoo
+        $COMPOSE_COMMAND exec -it odoo /restore.sh --filestore $DATABASE
+        # $COMPOSE_COMMAND exec -u root odoo chown -R odoo:odoo /var/lib/odoo/filestore/$DATABASE
+    fi
+
+}
+
 
 function clone-addons() {
     _ensure_is_running odoo
