@@ -1,5 +1,8 @@
 services:
   odoo:
+    volumes:
+      - ./postgres/restore.sh:/restore.sh
+      - ${BACKUP_DIR}:/mnt/backup
     restart: 'no'
     ports:
       - 8069:8069

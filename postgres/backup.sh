@@ -3,24 +3,24 @@
 
 # Load environment variables from .env file
 if [ -f "/.env" ]; then
-    # export $(grep -v '^#' "/.env" | xargs)
-    while IFS='=' read -r key value || [[ -n $key ]]; do
-        # Skip comments and empty lines
-        [[ $key =~ ^#.* ]] || [[ -z $key ]] && continue
+    set -a
+    source <(grep -v '^#' /.env | xargs -d '\n')
+    set +a
+    # while IFS='=' read -r key value || [[ -n $key ]]; do
+    #     # Skip comments and empty lines
+    #     [[ $key =~ ^#.* ]] || [[ -z $key ]] && continue
 
-        # Removing any quotes around the value
-        value=${value%\"}
-        value=${value#\"}
+    #     # Removing any quotes around the value
+    #     value=${value%\"}
+    #     value=${value#\"}
 
-        # Declare variable
-        eval "$key=\"$value\""
-    done < /.env
-
+    #     # Declare variable
+    #     eval "$key=\"$value\""
+    # done < /.env
 else
     echo "Error: .env file not found." >&2
     exit 1
 fi
-
 
 # Parse arguments
 INCLUDE_FILESTORE=false
