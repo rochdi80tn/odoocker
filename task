@@ -420,7 +420,7 @@ function _ensure_is_running() {
 function odoo-shell() {
     DATABASE="$1"
     if [ -z "$DATABASE" ]; then
-        DATABASE="$ODOO_DATABASE"
+        DATABASE="$DB_NAME"
     fi
     _ensure_is_running postgres
     # $COMPOSE_COMMAND exec -it odoo odoo shell --no-http
@@ -543,83 +543,31 @@ function list-valid-commands() {
 
 }
 
-function dump-db000() {
-    DATABASE_NAME="$1"
-    if [ -z "$DATABASE_NAME" ]; then
-        DATABASE_NAME="$DB_NAME"
+
+function update-module() {
+    if test -z "$1"; then echo "\$1 is empty."; exit; fi
+
+    # Use default database if second param is not given
+    if test -z "$2"; then
+        DATABASE="$DB_NAME"
+        MODULE_NAME=$(basename "$1")
+    else
+        DATABASE="$1"
+        MODULE_NAME=$(basename "$2")
     fi
 
-    # Check if required arguments are provided
-    # if [ -z "$1" ]; then
-    #     echo_color $COLOR_RED "Error: Database name is required."
-    #     echo "Usage: task backup-db <database_name> [backup_file]"
-    #     return 1
+
+    echo "Updating module $MODULE_NAME on $DATABASE ..."
+    $COMPOSE_COMMAND run --rm -it odoo update "$MODULE_NAME"
+
+
+
+    # if [[ -n "$ODOO_PARAM" ]] ; then
+    #     odoo --database "$DATABASE" --update "$MODULE_NAME" --config "$ODOO_RC" --addons-path="$ADDONS_PATH" --stop-after-init --no-http "$ODOO_PARAM"
+    # else
+    #     odoo --database "$DATABASE" --update "$MODULE_NAME" --config "$ODOO_RC" --addons-path="$ADDONS_PATH" --stop-after-init --no-http
     # fi
-
-    _ensure_is_running postgres
-    NOW=$(date +"%Y%m%d_%H%M%S")
-    BACKUP_FILE="${2:-${DATABASE_NAME}_backup_${NOW}.sql}"
-    BACKUP_FILE="${BACKUP_DIR}/$(basename "$BACKUP_FILE")"
-    DB_HOST="${DB_HOST:-localhost}"                 # Use DB_HOST from .env or default to localhost
-    DB_PORT="${DB_PORT:-5432}"                      # Use DB_PORT from .env or default to 5432
-    DB_USER="${DB_USER:-odoo}"                      # Use DB_USER from .env or default to odoo
-    DB_PASSWORD="${DB_PASSWORD:-odoo}"              # Use DB_PASSWORD from .env or default to odoo
-
-    echo_color $COLOR_BLUE "Backing up database '$DATABASE_NAME' to '$BACKUP_FILE'..."
-
-    # Export the PostgreSQL password to avoid password prompt
-    export PGPASSWORD="$DB_PASSWORD"
-
-    # Run pg_dump to back up the database
-
-    echo $COMPOSE_COMMAND exec -it postgres pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -F c -b -v -f "$BACKUP_FILE" "$DATABASE_NAME"
-
-    # Check if the backup was successful
-    if [ $? -eq 0 ]; then
-        echo_color $COLOR_GREEN "Backup successful! File saved as '$BACKUP_FILE'."
-    else
-        echo_color $COLOR_RED "Backup failed. Please check the database name, credentials, and PostgreSQL server."
-    fi
-
-    # Unset the PostgreSQL password for security
-    unset PGPASSWORD
 }
-
-
-function backup-db0000000() {
-    # Check if required arguments are provided
-    if [ -z "$1" ]; then
-        echo_color $COLOR_RED "Error: Database name is required."
-        echo "Usage: task backup-db <database_name> [backup_file]"
-        return 1
-    fi
-
-    DATABASE_NAME="$1"
-    BACKUP_FILE="${2:-${DATABASE_NAME}_backup.zip}"  # Default backup file name if not provided
-    ADMIN_PASSWORD="${ADMIN_PASSWD:-admin}"         # Use ADMIN_PASSWD from .env or default to 'admin'
-    ODOO_URL="http://${DOMAIN:-localhost}:${ODOO_PORT:-8069}"  # Use DOMAIN and ODOO_PORT from .env or defaults
-    ODOO_URL="http://localhost:${ODOO_PORT:-8069}"  # Use DOMAIN and ODOO_PORT from .env or defaults
-    ODOO_URL=http://erp.odoocker.test
-
-    echo_color $COLOR_BLUE "Backing up database '$DATABASE_NAME' from $ODOO_URL..."
-
-    # Send JSON-RPC request to Odoo's /web/database/backup endpoint
-    curl -X POST "$ODOO_URL/web/database/backup" \
-        -H "Content-Type: application/json" \
-        --data-raw '{
-                "master_pwd": "'"$ADMIN_PASSWORD"'",
-                "name": "'"$DATABASE_NAME"'",
-                "backup_format": "zip"
-        }' --output "$BACKUP_FILE" --fail
-
-    # Check if the backup was successful
-    if [ $? -eq 0 ]; then
-        echo_color $COLOR_GREEN "Backup successful! File saved as '$BACKUP_FILE'."
-    else
-        echo_color $COLOR_RED "Backup failed. Please check the database name, admin password, and Odoo server."
-    fi
-}
-
 
 # Creating missing folders and files
 [ -f ./task.md ] || update-help-docs

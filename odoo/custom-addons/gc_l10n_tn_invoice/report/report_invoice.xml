@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_invoice_document_inherit" inherit_id="account.report_invoice_document"
+        priority="20">
+
+        <xpath expr="//div[@id='informations']/div[@name='delivery_date']" position="replace" />
+        <xpath expr="//div[@id='informations']/div[@name='due_date']" position="replace" />
+        <xpath expr="//div[@id='informations']/div[@name='incoterm_id']" position="replace" />
+        <xpath expr="//div[@id='informations']/div[@name='origin']" position="replace" />
+
+        <xpath expr="//t[@t-set='lines']" position="replace">
+            <t t-set="lines"
+                t-value="o.invoice_line_ids.filtered(lambda l: l.product_id.name != 'Timbre Fiscal').sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)" />
+        </xpath>
+
+        <!-- Replace the payment term section to avoid displaying it -->
+        <xpath expr="//div[@id='payment_term']" position="replace" />
+
+        <!--
+        <xpath expr="//t[@name='account_invoice_line_accountable']" position="attributes">
+            <attribute name="t-if">line.display_type == 'product' and all(not tax.is_stamp for tax
+                in line.tax_ids)
+            </attribute>
+        </xpath> -->
+
+
+    </template>
+
+</odoo>

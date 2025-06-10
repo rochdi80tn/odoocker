@@ -1,0 +1,15 @@
+<odoo>
+
+    <template
+        id="deliveryslip_inherit_gc_sale_unit_price"
+        inherit_id="stock_picking_report_valued.valued_report_picking_has_serial_move_line"
+        priority="18"
+    >
+        <xpath expr="//td/span[@t-field='move_line.sale_price_unit']" position="replace">
+            <span t-field="move_line.sale_price_unit"
+                t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+        </xpath>
+    </template>
+
+
+</odoo>

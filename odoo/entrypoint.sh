@@ -59,6 +59,12 @@ case "$1" in
         exec $1
         ;;
 
+    update)
+        shift
+        UPDATE=$1
+        echo exec odoo --config ${ODOO_RC} --database=${DB_NAME} --init= --update=${UPDATE} --load-language= --without-demo= --workers=0 --dev=  --no-http --stop-after-init
+        exec odoo --config ${ODOO_RC} --database=${DB_NAME} --update=${UPDATE} --workers=0 --init= --no-http --stop-after-init
+        ;;
     -- | odoo)
         shift
         if [[ "$1" == "scaffold" ]] ; then

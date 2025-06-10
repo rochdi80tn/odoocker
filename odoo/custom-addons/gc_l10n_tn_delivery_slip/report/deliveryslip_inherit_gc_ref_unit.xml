@@ -1,0 +1,70 @@
+<odoo>
+
+    <template id="deliveryslip_inherit_gc_ref_unit"
+        inherit_id="stock.report_delivery_document"
+        priority="20"
+    >
+
+        <xpath expr="//th[@name='th_sml_product']" position="replace">
+            <th name="th_sml_internal_ref_gc" class="text-center">
+                <strong>Réf.</strong>
+            </th>
+            <th name="th_sml_product" class="text-center">
+                <strong>Désignation</strong>
+            </th>
+        </xpath>
+
+        <xpath expr="//th[@name='th_sml_quantity']" position="replace">
+            <th name="th_sml_quantity_qty" class="text-center">
+                <strong>Quantité</strong>
+            </th>
+            <th name="th_sml_quantity_unit" class="text-center">
+                <strong>Unité</strong>
+            </th>
+        </xpath>
+
+    </template>
+
+    <template
+        id="stock_report_delivery_has_serial_move_line_inherit_gc"
+        inherit_id="stock.stock_report_delivery_has_serial_move_line">
+
+
+        <xpath expr="//td[span[@t-field='move_line.product_id']]" position="replace">
+            <td>
+                <t t-if="move_line.product_id.default_code">
+                    <span class="text-muted" style="font-size: 90%"> [<t
+                            t-esc="move_line.product_id.default_code" />] </span>
+                </t>
+            </td>
+            <td>
+                <span t-field="move_line.product_id.name" />
+                <t t-if="not description and description != ''">
+                    <t t-set="description" t-value="move_line.move_id.description_picking" />
+                </t>
+                <p
+                    t-if="description != '' and
+                     description != move_line.product_id.display_name and
+                     description != move_line.product_id.name"
+                >
+                    <span t-esc="description" />
+                </p>
+            </td>
+        </xpath>
+
+        <xpath expr="//td[@name='move_line_lot_quantity']" position="replace">
+            <td class="text-center" name="move_line_lot_quantity_qty_gc">
+                <span t-field="move_line.quantity" />
+            </td>
+            <td class="text-center" name="move_line_lot_quantity_uint_gc">
+                <span t-field="move_line.product_uom_id" />
+                <span t-if="move_line.move_id.product_packaging_id"
+                    groups="product.group_stock_packaging"> (<span
+                        t-field="move_line.product_packaging_qty" t-options='{"widget": "integer"}' /> <span
+                        t-field="move_line.move_id.product_packaging_id.display_name" />) </span>
+            </td>
+        </xpath>
+    </template>
+
+
+</odoo>

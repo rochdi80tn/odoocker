@@ -1,0 +1,21 @@
+{
+    'name': 'GERA - Delivery Slip Customization',
+    'version': '18.0.1.0.0',
+    'summary': 'Customizations for the stock delivery slip report',
+    'description': 'Extends the standard Odoo delivery slip report with custom columns or logic.',
+    'category': 'Warehouse',
+    'author': 'GERANIUM',
+    'website': 'https://www.geranium.tn',
+    'license': 'Other proprietary',
+    'countries': ['tn'],
+    'depends': ['stock_picking_report_valued'],
+    'auto_install': ['stock_picking_report_valued'],
+    'data': [
+        'report/deliveryslip_inherit_gc_header.xml',
+        'report/deliveryslip_inherit_gc_ref_unit.xml',
+        'report/deliveryslip_inherit_gc_sale_unit_price.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}

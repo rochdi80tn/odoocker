@@ -29,7 +29,7 @@ trap cleanup ERR
 
 
 # Parse arguments
-VERBOSE=false
+VERBOSE=true
 RESTORE_FILESTORE=false
 RESTORE_DB=false
 while [[ $# -gt 0 ]]; do
@@ -120,16 +120,59 @@ if [[ "${RESTORE_DB}" = true ]]; then
   fi
 
   # Drop the existing database if it exists
-  echo "Dropping existing database (if it exists)..."
-  dropdb --if-exists --force -h "${DB_HOST}" -U "${DB_USER}" "${DATABASE}"
+  # dropdb --if-exists --force -h "${DB_HOST}" -U "${DB_USER}" "${DATABASE}"
 
   # Create the database
-  echo "Creating the database..."
-  createdb -h "${DB_HOST}" -U "${DB_USER}" "${DATABASE}"
+  # createdb -h "${DB_HOST}" -U "${DB_USER}" "${DATABASE}"
+
+
+  # Terminate all active connections to the target database before dropping
+  echo "Terminating all active connections to ${DATABASE}..."
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DATABASE}' AND pid <> pg_backend_pid();"
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to terminate active connections to the database ${DATABASE}."
+    exit 1
+  fi
+
+  echo
+  echo "Dropping existing databases $DB_TEMPLATE, $DATABASE and user $DB_USER (if exists)..."
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "DROP DATABASE IF EXISTS $DB_TEMPLATE;"
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "DROP DATABASE IF EXISTS $DATABASE;"
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "DROP USER IF EXISTS $DB_USER;"
+  echo
+  echo "Create the $DB_TEMPLATE database and $DB_USER user..."
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "CREATE DATABASE $DB_TEMPLATE WITH TEMPLATE = template0;"
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "ALTER USER $DB_USER CREATEDB;"
+  echo
+  echo "Give Odoo user access to copy $DB_TEMPLATE..."
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $POSTGRES_DB -c "GRANT ALL PRIVILEGES ON DATABASE $DB_TEMPLATE TO $DB_USER;"
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $DB_TEMPLATE -c "ALTER DATABASE $DB_TEMPLATE OWNER TO $DB_USER;"
+  echo
+  echo "Create the $DATABASE database from $DB_TEMPLATE..."
+  psql -p $POSTGRES_PORT -U $DB_USER -d $POSTGRES_DB -c "CREATE DATABASE $DATABASE WITH TEMPLATE $DB_TEMPLATE OWNER $DB_USER;"
+  psql -p $POSTGRES_PORT -U $DB_USER -d $DATABASE -c "CREATE EXTENSION IF NOT EXISTS unaccent;"
+  psql -p $POSTGRES_PORT -U $POSTGRES_MAIN_USER -d $DATABASE -c "ALTER FUNCTION unaccent(text) IMMUTABLE;"
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to mark the unaccent function as IMMUTABLE."
+    exit 1
+  fi
+
+  # Set verbosity flag for pg_dump
+  if [ "$VERBOSE" = true ]; then
+      PGRESTORE_VERBOSE="--verbose"
+  else
+      PGRESTORE_VERBOSE=""
+  fi
 
   # Restore database from the sql dump file
   echo "Restoring the database, this might take a while depending on the size of the database. Please wait..."
-  pg_restore --exit-on-error --verbose -h "${DB_HOST}" -U "${DB_USER}" -d "${DATABASE}" "${WORKING_DIR}/${DATABASE}.sql" >/dev/null 2>&1
+  pg_restore --exit-on-error ${PGRESTORE_VERBOSE} -h "${DB_HOST}" -U "${DB_USER}" -d "${DATABASE}" "${WORKING_DIR}/${DATABASE}.sql"
+  #>/dev/null 2>&1
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to restore the database ${DATABASE}."
+    exit 1
+  fi
 
 fi
 

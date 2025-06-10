@@ -1,0 +1,86 @@
+<odoo>
+    <template id="deliveryslip_inherit_gc_header"
+        inherit_id="stock.report_delivery_document"
+        priority="20"
+    >
+        <xpath expr="//div[@name='outgoing_delivery_address']" position="replace">
+            <div name="outgoing_delivery_address" t-if="o.should_print_delivery_address()">
+                <span>
+                    <strong>Informations client:</strong>
+                </span>
+                <div t-out="o.move_ids[0].partner_id or o.partner_id"
+                    t-options='{
+                    "widget": "contact",
+                    "fields": ["ref", "address", "name", "phone", "vat"],
+                    "no_marker": False,
+                    "phone_icons": True}'
+                />
+
+                <!-- <span>
+                    <strong>Informations client :</strong>
+                </span>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>
+                        <strong>Code client :</strong>
+                        <span t-esc="o.partner_id.ref or ''" />
+                    </li>
+                    <li>
+                        <strong>Nom du client :</strong>
+                        <span t-esc="o.partner_id.name or ''" />
+                    </li>
+                    <li>
+                        <strong>Adresse :</strong>
+                        <span t-esc="o.partner_id.contact_address or ''" />
+                    </li>
+                    <li>
+                        <strong>Téléphone :</strong>
+                        <span t-esc="o.partner_id.phone or ''" />
+                    </li>
+                    <li>
+                        <strong>Matricule fiscal :</strong>
+                        <span t-esc="o.partner_id.vat or ''" />
+                    </li>
+                </ul> -->
+            </div>
+        </xpath>
+
+        <!-- Replace the h2 title with BON DE LIVRAISON or BON DE RECEPTION + dynamic short name -->
+        <xpath expr="//div[hasclass('page')]/h2" position="replace">
+            <h2>
+                <t t-if="o.picking_type_id.code == 'incoming'">
+                    BON DE RECEPTION
+                </t>
+                <t t-if="o.picking_type_id.code == 'outgoing'">
+                    BON DE SORTIE
+                </t>
+            </h2>
+        </xpath>
+
+        <!-- Remove existing Order and Shipping Date blocks -->
+        <xpath expr="//div[@id='informations']/div[@name='div_origin']" position="replace" />
+        <xpath expr="//div[@id='informations']/div[@name='div_sched_date']" position="replace" />
+
+        <!-- Add Reference, Origin, and Shipping Date (date only) to the informations block -->
+        <xpath expr="//div[@id='informations']" position="inside">
+            <div class="col col-3 mw-100 mb-2" name="div_reference">
+                <strong>Référence</strong>
+                <div t-field="o.name" class="m-0" />
+            </div>
+            <div class="col col-3 mw-100 mb-2" name="div_sched_date_gc">
+                <strong>Date</strong>
+                <div t-if="o.state == 'done'" t-field="o.date_done" t-options='{"widget": "date"}'
+                    class="m-0" />
+                <div t-else="" t-field="o.scheduled_date" t-options='{"widget": "date"}' class="m-0" />
+            </div>
+            <t t-if="o.origin and false">
+                <div class="col col-3 mw-100 mb-2" name="div_origin_gc">
+                    <strong>Commande</strong>
+                    <div t-field="o.origin" class="m-0" />
+                </div>
+            </t>
+        </xpath>
+
+
+    </template>
+
+</odoo>
