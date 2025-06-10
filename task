@@ -438,12 +438,49 @@ function psql-shell() {
 
 
 function backup() {
+
+
+    # Parse arguments
+    INCLUDE_FILESTORE=false
+    VERBOSE=false
+    INCLUDE_PLAIN_SQL=false
+    ARGS=""
+    while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--filestore)
+        INCLUDE_FILESTORE=true
+        ARGS="$ARGS --filestore"
+        shift
+        ;;
+        -v|--verbose)
+        VERBOSE=true
+        ARGS="$ARGS --verbose"
+        shift
+        ;;
+        -p|--plain-sql)
+        INCLUDE_PLAIN_SQL=true
+        ARGS="$ARGS --plain-sql"
+        shift
+        ;;
+        -*)
+        echo "Invalid option: $1" >&2
+        echo "Usage: $0 backup [-f|--filestore] [-v|--verbose] [-p|--plain-sql] <database_name>" >&2
+        exit 1
+        ;;
+        *)
+        break
+        ;;
+    esac
+    done
+
     DATABASE="$1"
     if [ -z "$DATABASE" ]; then
         DATABASE="$DB_NAME"
     fi
     _ensure_is_running postgres
-    $COMPOSE_COMMAND exec -it postgres /backup.sh $DATABASE
+    echo $COMPOSE_COMMAND exec -it postgres /backup.sh $ARGS $DATABASE
+    $COMPOSE_COMMAND exec -it postgres /backup.sh $ARGS $DATABASE
+
 }
 
 function backup-full() {
