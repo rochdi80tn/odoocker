@@ -61,7 +61,7 @@ fi
 
 DATABASE=$1
 BACKUP_DIR="/mnt/backup"
-FILESTORE_PATH="/mnt/odoo-data/filestore"
+FILESTORE_PATH="${DATA_DIR}/filestore"
 # FILESTORE_PATH="/var/lib/odoo/filestore/$DATABASE"
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 WORKING_DIR="/tmp/${BACKUP_NAME}"
@@ -117,11 +117,12 @@ fi
 
 # Backup filestore if -f is present
 if [ "$INCLUDE_FILESTORE" = true ]; then
-    echo "Backing up the filestore..."
+    echo "Backing up the filestore ${FILESTORE_PATH}..."
     if [ -d "${FILESTORE_PATH}" ]; then
         cp -r "${FILESTORE_PATH}" "${WORKING_DIR}/filestore" >&2
     else
-        echo "Filestore directory does not exist, skipping filestore backup." >&2
+        echo "Error. Filestore directory does not exist." >&2
+        exit 6
     fi
 else
     echo "Skipping filestore backup (use -f to include it)."
