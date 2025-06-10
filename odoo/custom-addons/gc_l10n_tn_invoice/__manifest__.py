@@ -13,6 +13,8 @@
     'auto_install': ['account'],
     'data': [
         'report/report_invoice.xml',
+        'report/report_invoice_inherit_gc_unit.xml',
+
     ],
     'installable': True,
 }

@@ -6,7 +6,7 @@
         <xpath expr="//div[@id='informations']/div[@name='delivery_date']" position="replace" />
         <xpath expr="//div[@id='informations']/div[@name='due_date']" position="replace" />
         <xpath expr="//div[@id='informations']/div[@name='incoterm_id']" position="replace" />
-        <xpath expr="//div[@id='informations']/div[@name='origin']" position="replace" />
+        <xpath expr="//div[@id='informations']/div[@name='reference']" position="replace" />
 
         <xpath expr="//t[@t-set='lines']" position="replace">
             <t t-set="lines"
@@ -23,7 +23,15 @@
             </attribute>
         </xpath> -->
 
+    </template>
 
+    <!-- Disable payments printing -->
+    <template id="report_invoice_with_payments_inherit_disable_gc"
+        inherit_id="account.report_invoice_with_payments"
+        priority="20">
+        <xpath expr="//t[@t-set='print_with_payments']" position="replace">
+            <t t-set="print_with_payments" t-value="False" />
+        </xpath>
     </template>
 
 </odoo>

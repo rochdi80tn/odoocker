@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_invoice_document_inherit_unit_gc"
+        inherit_id="account.report_invoice_document"
+        priority="21">
+
+        <xpath expr="//th[@name='th_quantity']" position="replace">
+            <th name="th_quantity_qty" class="text-start">
+                <span>Quantité</span>
+            </th>
+            <th name="th_quantity_unit" class="text-start">
+                <span>Unité</span>
+            </th>
+        </xpath>
+
+        <xpath expr="//td[@name='td_quantity']" position="replace">
+            <td name="td_quantity_qty" class="text-start text-nowrap">
+                <span t-field="line.quantity">3.00</span>
+            </td>
+            <td name="td_quantity_unit" class="text-start text-nowrap">
+                <span t-field="line.product_uom_id" groups="uom.group_uom">units</span>
+            </td>
+        </xpath>
+
+
+        <xpath expr="//td[@name='td_price_unit']/span[@t-field='line.price_unit']"
+            position="attributes">
+            <attribute name="t-options">{'widget': 'monetary', 'display_currency': o.currency_id}</attribute>
+        </xpath>
+
+    </template>
+
+
+</odoo>
